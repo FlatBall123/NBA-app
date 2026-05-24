@@ -39,7 +39,7 @@ st.set_page_config(
     layout="wide",
 )
 st.title("🏀 計算機程式設計 NBA APP")
-st.caption("球員戰力分群 、 比賽預測 、 投資組合最佳化")
+st.caption("球員戰力分析 × 比賽預測 × 投資組合最佳化")
 
 
 # ---------- 資料載入（用 cache 避免每次互動都重算）----------
@@ -249,13 +249,30 @@ elif page == "最佳陣容（薪資上限）":
             # 標出被選中的球員 vs 全體
             data_plot = data.copy()
             data_plot["Selected"] = data_plot.index.isin(result.selected.index)
-            fig = px.scatter(
-                data_plot, x="Salary", y="SPV",
-                color="Selected", hover_name="Player",
-                title=f"預算 ${budget_m}M 下的最佳選擇",
-                color_discrete_map={True: "red", False: "lightgray"},
-            )
-            st.plotly_chart(fig, use_container_width=True)
+
+            # 兩張圖並排：左＝薪資 vs SPV，右＝風險(σ) vs SPV
+            chart_col1, chart_col2 = st.columns(2)
+
+            with chart_col1:
+                fig_salary = px.scatter(
+                    data_plot, x="Salary", y="SPV",
+                    color="Selected", hover_name="Player",
+                    title=f"薪資 vs 戰力（預算 ${budget_m}M）",
+                    labels={"Salary": "薪資（成本）", "SPV": "綜合戰力 SPV"},
+                    color_discrete_map={True: "red", False: "lightgray"},
+                )
+                st.plotly_chart(fig_salary, use_container_width=True)
+
+            with chart_col2:
+                fig_risk = px.scatter(
+                    data_plot, x="Player_Sigma", y="SPV",
+                    color="Selected", hover_name="Player",
+                    title=f"風險 vs 報酬（紅點＝最佳陣容）",
+                    labels={"Player_Sigma": "表現波動度 σ（風險）",
+                            "SPV": "綜合戰力 SPV（報酬）"},
+                    color_discrete_map={True: "red", False: "lightgray"},
+                )
+                st.plotly_chart(fig_risk, use_container_width=True)
 
 
 # =========================================================
